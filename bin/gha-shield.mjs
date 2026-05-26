@@ -105,12 +105,15 @@ const RULES = [
 function runRules(w) { return RULES.flatMap((r) => { try { return r(w) ?? []; } catch { return []; } }); }
 
 async function resolveSHA(action, ref) {
-  const url = `https://api.github.com/repos/${action}/commits/${encodeURIComponent(ref)}`;
+  // action may include subpath: "github/codeql-action/init" -> repo is "github/codeql-action"
+  const parts = action.split("/");
+  const repo = parts.slice(0, 2).join("/");
+  const url = `https://api.github.com/repos/${repo}/commits/${encodeURIComponent(ref)}`;
   const headers = { "User-Agent": "gha-shield", Accept: "application/vnd.github+json" };
   const tok = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
   if (tok) headers.Authorization = `Bearer ${tok}`;
   const res = await fetch(url, { headers });
-  if (!res.ok) throw new Error(`HTTP ${res.status} for ${action}@${ref}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${repo}@${ref}`);
   const j = await res.json();
   if (!j.sha || !/^[a-f0-9]{40}$/i.test(j.sha)) throw new Error(`no sha in response`);
   return j.sha;
