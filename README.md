@@ -137,6 +137,18 @@ See [REAL-WORLD-AUDITS.md](./REAL-WORLD-AUDITS.md) — unedited scan results fro
 
 `octoscan` exists. `actionlint` exists. Spectral has a security ruleset. Each one wants you to install a CLI, learn its flag set, integrate it into CI, and read the JSON output yourself. gha-shield is the 5-second answer for the case where you just want to know whether the workflow in your scratch tab is unsafe to merge.
 
+## Tip the maintainer (Solana / USDC SPL)
+
+If gha-shield saved you a CVE, drop a tip. Scan the QR with any Solana wallet (Phantom, Backpack, Solflare) — it auto-fills the recipient + USDC SPL mint via [Solana Pay](https://docs.solanapay.com/spec):
+
+<a href="solana:634UtV9dWq8G7ciosqx1pcKkBK4kNkNod9yvoM8ujSdM?spl-token=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&label=gha-shield&message=Tip%20for%20gha-shield"><img src="./docs/tip-qr.svg" alt="Solana Pay QR — gha-shield tip jar" width="220" /></a>
+
+- **Wallet**: `634UtV9dWq8G7ciosqx1pcKkBK4kNkNod9yvoM8ujSdM`
+- **Token**: USDC SPL (`EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`)
+- **Pay link**: [`solana:634UtV9dWq8G7ciosqx1pcKkBK4kNkNod9yvoM8ujSdM?spl-token=…`](solana:634UtV9dWq8G7ciosqx1pcKkBK4kNkNod9yvoM8ujSdM?spl-token=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&label=gha-shield&message=Tip%20for%20gha-shield)
+
+No KYC, no Stripe Connect, no minimum. Settles in ~400ms on Solana mainnet.
+
 ## License
 
 V0/V1 source is private until product/market validated. After V2.1 the 6 free rules + harness will be released under MIT; the 4 Pro LLM rules remain behind paywall.
