@@ -38,6 +38,27 @@ The 19 `no-permissions` findings are jobs on external triggers without an explic
 
 ---
 
+## `prisma/prisma` — 17 workflows, 139 findings
+
+Scanned: 2026-05-26, `main` branch.
+
+```
+By rule id (desc):
+  unpinned-action            89   (HIGH)
+  third-party-action-token   27   (HIGH/MED)
+  no-timeout-minutes          9   (LOW)
+  no-permissions              8   (MED)
+  scheduled-broad-perms       3   (MED)
+  continue-on-error-auth      2   (HIGH)
+  cmd-injection               1   (CRIT)
+```
+
+**89 unpinned actions in 17 workflows** is the densest unpinned-action count in this corpus. Every third-party action is referenced by tag rather than 40-char commit SHA. The tag → SHA migration is mechanical (Dependabot can keep them fresh), but the surface as it stands today means every CI run trusts the current maintainer of each tagged action not to retag malicious code.
+
+The 27 `third-party-action-token` findings are concentrated in update workflows (`update-studio-version.yml`, etc.) that hand a token to non-`actions/*`-owner actions. The 1 CRIT `cmd-injection` is a single isolated instance after the rule 3 v1.0.1 SAFE_LEAF_FIELDS cleanup.
+
+---
+
 ## `oven-sh/bun` — 30 workflows, 59 findings
 
 Scanned: 2026-05-26, `main` branch, after the rule 3 v1.0.1 false-positive cleanup.
