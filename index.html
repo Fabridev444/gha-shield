@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>gha-shield — GitHub Actions security scanner</title>
+<meta name="description" content="Paste a GitHub Actions workflow YAML and get a security report in 5 seconds. 13 rules, browser-only, no signup. Free single-file scan, $9 Pro for bulk + LLM patterns + PDF." />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230c0d10'/%3E%3Cpath d='M32 10 L52 18 V32 C52 44 32 56 32 56 C32 56 12 44 12 32 V18 Z' fill='none' stroke='%234ade80' stroke-width='3' stroke-linejoin='round'/%3E%3Cpath d='M22 32 L29 39 L42 26' fill='none' stroke='%234ade80' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="gha-shield — GitHub Actions security scanner" />
+<meta property="og:description" content="Paste a workflow YAML, get 13 categorized findings in 5 seconds. Browser-only, no signup, no logs. Built for the case where `octoscan` and `actionlint` feel like overkill." />
+<meta property="og:site_name" content="gha-shield" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="gha-shield — GitHub Actions security scanner" />
+<meta name="twitter:description" content="Paste a workflow YAML, get 13 categorized findings in 5 seconds. Browser-only, no signup, no logs." />
+<meta name="theme-color" content="#0c0d10" />
+<style>
+  :root {
+    --bg: #0c0d10;
+    --panel: #16181d;
+    --panel-2: #1f2228;
+    --border: #2a2d35;
+    --text: #e6e7ea;
+    --text-dim: #8b8f97;
+    --accent: #4ade80;
+    --crit: #ef4444;
+    --high: #f97316;
+    --med: #eab308;
+    --low: #38bdf8;
+    --info: #a3a3a3;
+    --mono: ui-monospace, "SF Mono", Menlo, Monaco, "Cascadia Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    background: var(--panel);
+  }
+  header h1 {
+    margin: 0;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+  header h1 .shield { color: var(--accent); }
+  header .tag {
+    color: var(--text-dim);
+    font-size: 12px;
+  }
+  main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px;
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; }
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+  }
+  .panel h2 {
+    margin: 0 0 12px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+  }
+  textarea, input {
+    width: 100%;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 12px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.5;
+    resize: vertical;
+  }
+  textarea { min-height: 360px; }
+  textarea:focus, input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  input { margin-bottom: 10px; }
+  .meta {
+    color: var(--text-dim);
+    font-size: 12px;
+    margin-top: 8px;
+  }
+  .btn {
+    background: var(--accent);
+    color: var(--bg);
+    border: 0;
+    border-radius: 6px;
+    padding: 12px 18px;
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 6px;
+  }
+  .btn:hover { filter: brightness(1.1); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-pro {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+  .results {
+    grid-column: 1 / -1;
+    margin-top: 12px;
+  }
+  .results-empty {
+    color: var(--text-dim);
+    text-align: center;
+    padding: 36px;
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+  }
+  .finding {
+    background: var(--panel);
+    border-left: 3px solid var(--border);
+    border-radius: 4px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    align-items: start;
+  }
+  .finding.crit  { border-left-color: var(--crit); }
+  .finding.high  { border-left-color: var(--high); }
+  .finding.med   { border-left-color: var(--med); }
+  .finding.low   { border-left-color: var(--low); }
+  .finding.info  { border-left-color: var(--info); }
+  .sev {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    border-radius: 3px;
+  }
+  .sev.crit { background: rgba(239,68,68,0.15);  color: var(--crit); }
+  .sev.high { background: rgba(249,115,22,0.15); color: var(--high); }
+  .sev.med  { background: rgba(234,179,8,0.15);  color: var(--med);  }
+  .sev.low  { background: rgba(56,189,248,0.15); color: var(--low);  }
+  .sev.info { background: rgba(163,163,163,0.15);color: var(--info); }
+  .finding-body { min-width: 0; }
+  .finding-title { font-weight: 600; margin-bottom: 4px; }
+  .finding-desc { color: var(--text-dim); font-size: 13px; }
+  .finding-loc { font-size: 12px; color: var(--text-dim); margin-top: 6px; font-family: var(--mono); }
+  .finding-fix {
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: var(--panel-2);
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .pro-lock {
+    background: var(--panel);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 16px;
+    text-align: center;
+  }
+  .pro-lock h3 { margin: 0 0 8px; color: var(--accent); }
+  .pro-lock p { color: var(--text-dim); margin: 0 0 14px; }
+  footer {
+    text-align: center;
+    padding: 30px;
+    color: var(--text-dim);
+    font-size: 12px;
+    border-top: 1px solid var(--border);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  code {
+    background: var(--panel-2);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="shield">▲</span> gha-shield</h1>
+  <span class="tag">GitHub Actions security scanner · BYOK · no logs</span>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>Workflow YAML</h2>
+    <textarea id="yaml-input" placeholder="# Paste your .github/workflows/*.yml here&#10;name: CI&#10;on: [push, pull_request]&#10;jobs:&#10;  build:&#10;    runs-on: ubuntu-latest&#10;    steps:&#10;      - uses: actions/checkout@v3"></textarea>
+    <p class="meta">Pasted YAML stays in your browser. Nothing is logged.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Scan options</h2>
+    <input id="api-key" type="password" placeholder="Anthropic / OpenAI key (optional, for Pro rules)" />
+    <p class="meta" style="margin-bottom: 16px;">Your own key. Used in-session, never stored. Skip to run the 6 free rules only.</p>
+
+    <button class="btn" id="scan-btn">Scan</button>
+    <button class="btn" id="demo-btn" style="margin-top: 10px; background: var(--panel-2); color: var(--text); border: 1px solid var(--border);">Load a vulnerable demo workflow</button>
+    <button class="btn btn-pro" id="upgrade-btn" style="margin-top: 10px;">Upgrade to Pro — $9 one-time</button>
+
+    <div class="meta" style="margin-top: 16px;">
+      <strong style="color: var(--text);">Free tier (13 rules):</strong><br />
+      • Unpinned third-party actions<br />
+      • <code>pull_request_target</code> + PR-ref checkout<br />
+      • Command injection via <code>${{ }}</code> interpolation<br />
+      • Missing <code>permissions:</code> block<br />
+      • <code>continue-on-error</code> on auth/test<br />
+      • Secrets in <code>if:</code> conditions<br />
+      • <code>curl | bash</code> / <code>wget | sh</code><br />
+      • Gist/raw/paste download without checksum<br />
+      • <code>schedule:</code> with broad token<br />
+      • <code>workflow_run</code> + untrusted checkout<br />
+      • Hard-coded credential in <code>env:</code> (sk-…, ghp_…, AKIA…)<br />
+      • Untrusted action receives <code>GITHUB_TOKEN</code> / secrets<br />
+      • Job missing <code>timeout-minutes</code>
+    </div>
+
+    <div class="meta" style="margin-top: 16px;">
+      <strong style="color: var(--accent);">Pro ($9 — bulk + LLM + PDF):</strong><br />
+      • Bulk scan a whole <code>.github/workflows/</code> folder<br />
+      • LLM patterns (BYOK): cross-job creds, eval/exec idioms, dev/prod secret confusion<br />
+      • Specific safer rewrites per finding<br />
+      • Full PDF report export
+    </div>
+  </section>
+
+  <section class="results panel" id="results">
+    <h2>Findings</h2>
+    <div class="results-empty">Paste a workflow YAML and click Scan to see findings.</div>
+  </section>
+</main>
+
+<footer>
+  Open source rules at <a href="https://github.com/" id="footer-repo">github.com/&lt;owner&gt;/gha-shield</a>
+  · Refund within 30 days · Maintainer email on Stripe receipt
+</footer>
+
+<script type="module" src="./scripts/main.js"></script>
+
+<template id="finding-template">
+  <div class="finding">
+    <span class="sev"></span>
+    <div class="finding-body">
+      <div class="finding-title"></div>
+      <div class="finding-desc"></div>
+      <div class="finding-loc"></div>
+      <div class="finding-fix"></div>
+    </div>
+  </div>
+</template>
+
+</body>
+</html>
