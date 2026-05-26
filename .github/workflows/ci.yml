@@ -1,0 +1,26 @@
+name: ci
+on:
+  push:
+  pull_request:
+permissions: read-all
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '20'
+      - run: node --test scripts/rules.test.mjs
+
+  self-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: test
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Scan own workflows with gha-shield
+        uses: ./
+        with:
+          fail-on: crit

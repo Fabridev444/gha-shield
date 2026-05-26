@@ -1,0 +1,33 @@
+name: 'gha-shield — Workflow Security Scanner'
+description: 'Scan .github/workflows/ YAMLs for 13 security issues (unpinned actions, command injection, hardcoded secrets, missing permissions, more). Pure Node, no install, no network.'
+author: 'Fabridev444'
+
+branding:
+  icon: 'shield'
+  color: 'green'
+
+inputs:
+  path:
+    description: 'Glob or directory to scan'
+    required: false
+    default: '.github/workflows'
+  fail-on:
+    description: 'Severity at which the job fails. One of: never, low, med, high, crit'
+    required: false
+    default: 'high'
+  format:
+    description: 'Output format: text | json | github (annotations)'
+    required: false
+    default: 'github'
+
+outputs:
+  findings_count:
+    description: 'Total findings across all scanned files'
+  crit_count:
+    description: 'Number of critical findings'
+  high_count:
+    description: 'Number of high findings'
+
+runs:
+  using: 'node20'
+  main: 'action/index.js'

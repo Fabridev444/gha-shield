@@ -1,0 +1,6 @@
+{
+  "name": "gha-shield-action",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": { "yaml": "^2.8.4" }
+}
