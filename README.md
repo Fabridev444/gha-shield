@@ -133,6 +133,10 @@ V2 deploy will add a Cloudflare Worker for the Stripe webhook handler and the Pr
 
 See [REAL-WORLD-AUDITS.md](./REAL-WORLD-AUDITS.md) — unedited scan results from running gha-shield over the public workflows of `vercel/next.js` (87 findings, 4 crit) and `archestra-ai/archestra` (15 findings). Methodology + reproducer commands included.
 
+## Real-world `--fix` PRs
+
+See [EXAMPLES.md](./EXAMPLES.md) — three drive-by PRs opened mechanically with `--fix` against [DNSCrypt/dnscrypt-proxy](https://github.com/DNSCrypt/dnscrypt-proxy/pull/3231), [node-schedule/node-schedule](https://github.com/node-schedule/node-schedule/pull/759), and [anza-xyz/wallet-adapter](https://github.com/anza-xyz/wallet-adapter/pull/1154). Total: 31 action references pinned across 10 workflows in three minutes of human time.
+
 ## Why this exists (the one-line version)
 
 `octoscan` exists. `actionlint` exists. Spectral has a security ruleset. Each one wants you to install a CLI, learn its flag set, integrate it into CI, and read the JSON output yourself. gha-shield is the 5-second answer for the case where you just want to know whether the workflow in your scratch tab is unsafe to merge.
