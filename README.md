@@ -1,5 +1,10 @@
 # gha-shield
 
+[![CI](https://github.com/Fabridev444/gha-shield/actions/workflows/ci.yml/badge.svg)](https://github.com/Fabridev444/gha-shield/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Fabridev444/gha-shield)](https://github.com/Fabridev444/gha-shield/releases)
+[![Try in browser](https://img.shields.io/badge/browser-fabridev444.github.io%2Fgha--shield-4ade80)](https://fabridev444.github.io/gha-shield/)
+[![Tests](https://img.shields.io/badge/tests-48%2F48%20passing-4ade80)](https://github.com/Fabridev444/gha-shield/blob/main/scripts/rules.test.mjs)
+
 GitHub Actions workflow security scanner. Paste a YAML, get a security report in 5 seconds. No CLI install, no GitHub App permissions, no logs.
 
 ## What it catches (V1, free tier)
