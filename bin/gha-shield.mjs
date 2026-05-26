@@ -3,7 +3,7 @@
 // Usage:
 //   npx Fabridev444/gha-shield [path] [--fail-on=high] [--format=text|json|github]
 
-import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
+import { readFileSync, readdirSync, statSync, existsSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { parse } from "yaml";
 
@@ -28,12 +28,15 @@ Usage:
 Options:
   --fail-on=<severity>   Exit non-zero if any finding >= severity (crit|high|med|low|never). Default: high
   --format=<fmt>         Output format: text | json | github. Default: text (TTY) or github (CI)
+  --fix                  Auto-pin unpinned actions to commit SHAs (rewrites files in place).
+                         Uses GH_TOKEN/GITHUB_TOKEN env var if set (higher rate limit).
   --help                 Show this help
 
 Examples:
   npx Fabridev444/gha-shield                       # scan .github/workflows in cwd
   npx Fabridev444/gha-shield path/to/workflow.yml  # scan single file
   npx Fabridev444/gha-shield . --format=json       # JSON to stdout
+  npx Fabridev444/gha-shield . --fix               # rewrite unpinned actions to SHAs
 
 Source: https://github.com/Fabridev444/gha-shield
 Browser: https://fabridev444.github.io/gha-shield/
@@ -101,6 +104,42 @@ const RULES = [
 
 function runRules(w) { return RULES.flatMap((r) => { try { return r(w) ?? []; } catch { return []; } }); }
 
+async function resolveSHA(action, ref) {
+  const url = `https://api.github.com/repos/${action}/commits/${encodeURIComponent(ref)}`;
+  const headers = { "User-Agent": "gha-shield", Accept: "application/vnd.github+json" };
+  const tok = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
+  if (tok) headers.Authorization = `Bearer ${tok}`;
+  const res = await fetch(url, { headers });
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${action}@${ref}`);
+  const j = await res.json();
+  if (!j.sha || !/^[a-f0-9]{40}$/i.test(j.sha)) throw new Error(`no sha in response`);
+  return j.sha;
+}
+
+async function applyFix(file) {
+  const txt = readFileSync(file, "utf8");
+  const lines = txt.split("\n");
+  const RX = /^(\s*-?\s*uses:\s*)([\w.-]+\/[\w./-]+)@([\w./-]+)(\s*#.*)?$/;
+  let changed = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(RX);
+    if (!m) continue;
+    const [, prefix, action, ref] = m;
+    if (/^[a-f0-9]{40}$/i.test(ref)) continue;
+    if (action.startsWith("./") || action.startsWith("docker:")) continue;
+    try {
+      const sha = await resolveSHA(action, ref);
+      lines[i] = `${prefix}${action}@${sha} # ${ref}`;
+      console.log(`  ${file}: ${action}@${ref} -> @${sha.slice(0, 7)} # ${ref}`);
+      changed++;
+    } catch (e) {
+      console.error(`  ${file}: ${action}@${ref}: ${e.message}`);
+    }
+  }
+  if (changed) writeFileSync(file, lines.join("\n"));
+  return changed;
+}
+
 function* walk(p) {
   for (const e of readdirSync(p, { withFileTypes: true })) {
     const fp = join(p, e.name);
@@ -113,6 +152,14 @@ const tgtAbs = resolve(target);
 if (!existsSync(tgtAbs)) { console.error(`gha-shield: path not found: ${tgtAbs}`); process.exit(2); }
 const files = statSync(tgtAbs).isDirectory() ? [...walk(tgtAbs)] : [tgtAbs];
 if (!files.length) { console.log(`gha-shield: no YAML files in ${tgtAbs}`); process.exit(0); }
+
+if (flags.fix) {
+  console.log(`gha-shield --fix: resolving SHAs for unpinned actions in ${files.length} file(s)...`);
+  let total = 0;
+  for (const f of files) total += await applyFix(f);
+  console.log(`gha-shield --fix: ${total} action(s) pinned to SHA across ${files.length} file(s).`);
+  process.exit(0);
+}
 
 const all = [];
 const counts = { crit: 0, high: 0, med: 0, low: 0, info: 0 };
