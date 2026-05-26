@@ -365,6 +365,54 @@ function annotate(level, file, msg) {
   if (format === "text") {
     for (const fi of all) console.log(`${fi.severity.toUpperCase().padEnd(4)} ${fi.id.padEnd(35)} ${fi.file} ${fi.location}`);
   }
+  if (format === "sarif") {
+    const sarifPath = process.env["INPUT_SARIF-FILE"] || "gha-shield.sarif";
+    const SEV_TO_SARIF = { crit: "error", high: "error", med: "warning", low: "note", info: "note" };
+    const SEV_TO_SCORE = { crit: "9.8", high: "8.0", med: "5.5", low: "3.0", info: "1.0" };
+    const ruleIndex = new Map();
+    const rulesArr = [];
+    for (const fi of all) {
+      if (!ruleIndex.has(fi.id)) {
+        ruleIndex.set(fi.id, rulesArr.length);
+        rulesArr.push({
+          id: fi.id,
+          name: fi.id.replace(/-([a-z])/g, (_, c) => c.toUpperCase()),
+          shortDescription: { text: fi.title },
+          fullDescription: { text: fi.title },
+          defaultConfiguration: { level: SEV_TO_SARIF[fi.severity] || "note" },
+          properties: { "security-severity": SEV_TO_SCORE[fi.severity] || "1.0", tags: ["security", "github-actions"] },
+        });
+      }
+    }
+    const sarif = {
+      $schema: "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+      version: "2.1.0",
+      runs: [{
+        tool: {
+          driver: {
+            name: "gha-shield",
+            version: "1.0.3",
+            informationUri: "https://github.com/Fabridev444/gha-shield",
+            rules: rulesArr,
+          },
+        },
+        results: all.map((fi) => ({
+          ruleId: fi.id,
+          ruleIndex: ruleIndex.get(fi.id),
+          level: SEV_TO_SARIF[fi.severity] || "note",
+          message: { text: `[${fi.severity.toUpperCase()}] ${fi.title} @ ${fi.location}` },
+          locations: [{
+            physicalLocation: {
+              artifactLocation: { uri: fi.file.replace(/^\.\//, "") },
+              region: { startLine: 1, startColumn: 1 },
+            },
+          }],
+        })),
+      }],
+    };
+    fs.writeFileSync(sarifPath, JSON.stringify(sarif, null, 2));
+    console.log(`gha-shield: SARIF written to ${sarifPath}`);
+  }
 
   console.log(`gha-shield: scanned ${files.length} workflow(s), ${all.length} finding(s) — ${critC} crit, ${highC} high, ${medC} med, ${lowC} low`);
 

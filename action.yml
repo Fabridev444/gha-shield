@@ -16,9 +16,13 @@ inputs:
     required: false
     default: 'high'
   format:
-    description: 'Output format: text | json | github (annotations)'
+    description: 'Output format: text | json | github | sarif'
     required: false
     default: 'github'
+  sarif-file:
+    description: 'Where to write the SARIF output when format=sarif'
+    required: false
+    default: 'gha-shield.sarif'
 
 outputs:
   findings_count:
@@ -30,4 +34,4 @@ outputs:
 
 runs:
   using: 'node20'
-  main: 'action/index.js'
+  main: 'action/index.cjs'
