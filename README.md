@@ -27,6 +27,29 @@ Thirteen hard-coded rules that run entirely in the browser:
 | `third-party-action-token` | HIGH/MED | Untrusted-owner action (not `actions/*`/`github/*`/`docker/*`) receives `GITHUB_TOKEN` (HIGH) or any other `secrets.*` value (MED) via `with:`. |
 | `no-timeout-minutes` | LOW | Job on an externally-triggered workflow has no `timeout-minutes` (default 6h burns minutes quota on hangs/loops). |
 
+## Three ways to run it
+
+**1. In your browser** (zero install):
+```
+https://fabridev444.github.io/gha-shield/
+```
+
+**2. As a CLI** (no install, runs from GitHub via npx):
+```bash
+npx Fabridev444/gha-shield                   # scans ./.github/workflows
+npx Fabridev444/gha-shield path/file.yml     # single file
+npx Fabridev444/gha-shield . --format=json   # JSON to stdout
+npx Fabridev444/gha-shield --fail-on=crit    # custom threshold
+```
+
+**3. As a GitHub Action** (in your CI):
+```yaml
+- uses: Fabridev444/gha-shield@v1.0.1
+  with:
+    path: .github/workflows
+    fail-on: high
+```
+
 ## What's coming (Pro tier, $9 one-time)
 
 Three high-leverage extras that ship with V2:
