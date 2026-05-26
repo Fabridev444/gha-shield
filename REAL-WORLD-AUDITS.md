@@ -38,6 +38,25 @@ The 19 `no-permissions` findings are jobs on external triggers without an explic
 
 ---
 
+## `astral-sh/uv` — 27 workflows, 12 findings
+
+Scanned: 2026-05-26, `main` branch.
+
+```
+By rule id:
+  third-party-action-token   9   (3 HIGH + 6 MED)
+  curl-pipe-bash             1   (HIGH)
+  no-timeout-minutes         2   (LOW)
+```
+
+The two HIGH `third-party-action-token` findings are both in `build-release-binaries.yml` (`jobs.linux-riscv64.steps[4|9].with.githubToken`) — actions outside the trusted owners list (`actions/*`, `github/*`, `docker/*`) receiving `GITHUB_TOKEN`. The narrow PAT recommendation in the rule's fix message applies.
+
+The HIGH `curl-pipe-bash` is in `test-system.yml`, the pyenv install step. Common pattern across many Python projects — pyenv's official installer ships as a curl-piped script. Mitigation per the rule: download to a file first, verify the published SHA, then execute.
+
+The 6 MED `third-party-action-token` findings cover AWS, Google Cloud, and trigger tokens passed to community actions. False-positive risk is moderate — `aws-actions/*` and `google-github-actions/*` are arguably as trustworthy as the official `actions/*` owners, but the rule keeps the trusted-owner list deliberately small. Recommendation: extend the trusted-owner allowlist as a follow-up rule option.
+
+---
+
 ## `archestra-ai/archestra` — 23 workflows, 15 findings
 
 Scanned: 2026-05-26, `main` branch.
