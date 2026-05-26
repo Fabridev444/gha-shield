@@ -38,6 +38,24 @@ The 19 `no-permissions` findings are jobs on external triggers without an explic
 
 ---
 
+## `vitest-dev/vitest` — 9 workflows, 13 findings
+
+Scanned: 2026-05-26, `main` branch, post v1.0.4 trusted-owner expansion.
+
+```
+By severity:
+   0 CRIT
+   3 HIGH
+   1 MED
+   9 LOW
+```
+
+Smallest finding-count repo in the corpus relative to workflow size (~1.4 per workflow). The 3 HIGH are concentrated in: `ci.yml` `continue-on-error: true` on a merge-reports step (intentional per the workflow's `try-to-publish-report-on-failure` pattern, likely a false-positive in spirit), and two `third-party-action-token` HIGHs in `lock-closed-issues.yml` and `pr-labeled-automated.yml` — both actions are SHA-pinned, so the residual risk class is owner-trust rather than tag-rotation.
+
+For reviewers comparing the corpus: vitest workflows are notably cleaner than the JS-tooling baseline (Prisma 89 unpinned actions, Bun 11 HIGH before rule 12 expansion).
+
+---
+
 ## `prisma/prisma` — 17 workflows, 139 findings
 
 Scanned: 2026-05-26, `main` branch.
