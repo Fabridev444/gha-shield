@@ -48,7 +48,7 @@ const formatRaw = flags.format || (process.env.GITHUB_ACTIONS ? "github" : "text
 const format = formatRaw.toLowerCase();
 const useColor = process.stdout.isTTY && format === "text";
 
-const TRUSTED_ACTION_OWNERS = new Set(["actions", "github", "docker"]);
+const TRUSTED_ACTION_OWNERS = new Set(["actions","github","docker","aws-actions","google-github-actions","azure","peter-evans","oven-sh","astral-sh","step-security","cloudflare","vercel","hashicorp","pulumi","sigstore","slsa-framework"]);
 const SAFE_LEAF_FIELDS = new Set([
   "number", "id", "node_id", "comments",
   "created_at", "updated_at", "closed_at", "merged_at", "submitted_at",

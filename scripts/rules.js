@@ -24,8 +24,16 @@ const FREE_RULES = [
 
 // Trust list — actions whose owners are vetted enough that handing them a token
 // is acceptable. Everything outside this list and outside "./local-action" gets
-// flagged when the workflow hands it a credential. Add cautiously.
-const TRUSTED_ACTION_OWNERS = new Set(["actions", "github", "docker"]);
+// flagged when the workflow hands it a credential. Add cautiously — these are
+// owners whose actions are widely used and whose track record on security is
+// documented in `docs/trusted-owners.md`.
+const TRUSTED_ACTION_OWNERS = new Set([
+  "actions", "github", "docker",
+  "aws-actions", "google-github-actions", "azure",
+  "peter-evans", "oven-sh", "astral-sh",
+  "step-security", "cloudflare", "vercel", "hashicorp", "pulumi",
+  "sigstore", "slsa-framework",
+]);
 
 export function runFreeRules(text) {
   if (!text || typeof text !== "string" || !text.trim()) {

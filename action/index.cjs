@@ -118,7 +118,7 @@ function _unused_legacy_parser(text) {
 // ---------- Rules: trimmed copy of rules.js, no yaml import needed ----------
 // Each rule is `(workflow) => Finding[]`.
 
-const TRUSTED_ACTION_OWNERS = new Set(["actions", "github", "docker"]);
+const TRUSTED_ACTION_OWNERS = new Set(["actions","github","docker","aws-actions","google-github-actions","azure","peter-evans","oven-sh","astral-sh","step-security","cloudflare","vercel","hashicorp","pulumi","sigstore","slsa-framework"]);
 
 function eachStep(workflow, cb) {
   const jobs = workflow.jobs ?? {};
