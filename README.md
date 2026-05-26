@@ -100,6 +100,11 @@ V2 deploy will add a Cloudflare Worker for the Stripe webhook handler and the Pr
 - [ ] V2.3 — PDF report export from the report view.
 - [ ] V3 — `Watch` tier ($5/mo): GitHub App, webhook on push to `.github/workflows/*`, 14-day history.
 
+
+## Real-world audits
+
+See [REAL-WORLD-AUDITS.md](./REAL-WORLD-AUDITS.md) — unedited scan results from running gha-shield over the public workflows of `vercel/next.js` (87 findings, 4 crit) and `archestra-ai/archestra` (15 findings). Methodology + reproducer commands included.
+
 ## Why this exists (the one-line version)
 
 `octoscan` exists. `actionlint` exists. Spectral has a security ruleset. Each one wants you to install a CLI, learn its flag set, integrate it into CI, and read the JSON output yourself. gha-shield is the 5-second answer for the case where you just want to know whether the workflow in your scratch tab is unsafe to merge.
