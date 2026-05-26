@@ -1,6 +1,48 @@
 {
-  "name": "gha-shield-action",
-  "version": "1.0.0",
-  "private": true,
-  "dependencies": { "yaml": "^2.8.4" }
+  "name": "gha-shield",
+  "version": "1.0.1",
+  "description": "GitHub Actions workflow security scanner — 13 rules, browser + CLI + Action, no external service.",
+  "type": "module",
+  "bin": {
+    "gha-shield": "./bin/gha-shield.mjs"
+  },
+  "files": [
+    "bin/",
+    "action/",
+    "scripts/rules.js",
+    "scripts/main.js",
+    "action.yml",
+    "index.html",
+    "README.md",
+    "REAL-WORLD-AUDITS.md"
+  ],
+  "scripts": {
+    "test": "node --test scripts/rules.test.mjs"
+  },
+  "dependencies": {
+    "yaml": "^2.8.4"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "github-actions",
+    "security",
+    "devsecops",
+    "ci-cd",
+    "workflow",
+    "security-tools",
+    "supply-chain-security",
+    "yaml",
+    "static-analysis",
+    "linter"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Fabridev444/gha-shield.git"
+  },
+  "homepage": "https://fabridev444.github.io/gha-shield/",
+  "bugs": "https://github.com/Fabridev444/gha-shield/issues",
+  "author": "Fabridev444",
+  "license": "SEE LICENSE IN README"
 }
