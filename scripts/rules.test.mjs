@@ -152,6 +152,27 @@ test("rule3 — flags head_ref in run", () => {
   assert.ok(hasFinding(f, "cmd-injection"));
 });
 
+test("rule3 — passes github.event.issue.number (integer leaf is safe)", () => {
+  const w = {
+    jobs: { build: { steps: [{ run: "echo ${{ github.event.issue.number }}" }] } },
+  };
+  assert.equal(countFinding(runFreeRulesParsed(w), "cmd-injection"), 0);
+});
+
+test("rule3 — passes github.event.pull_request.id (integer leaf is safe)", () => {
+  const w = {
+    jobs: { build: { steps: [{ run: "echo PR #${{ github.event.pull_request.id }}" }] } },
+  };
+  assert.equal(countFinding(runFreeRulesParsed(w), "cmd-injection"), 0);
+});
+
+test("rule3 — STILL flags github.event.issue.title (string user-controlled)", () => {
+  const w = {
+    jobs: { build: { steps: [{ run: "echo ${{ github.event.issue.title }}" }] } },
+  };
+  assert.ok(hasFinding(runFreeRulesParsed(w), "cmd-injection"));
+});
+
 test("rule3 — passes safe env-mediated reference", () => {
   const w = {
     jobs: {

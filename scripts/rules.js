@@ -144,19 +144,48 @@ function rule2PRTargetCheckout(w) {
 
 // ---------- Rule 3: Command injection via untrusted ${{ ... }} in run blocks ----------
 
+// Fields under github.event.{pull_request,issue,comment,review,workflow_run}.<X>
+// that are integers, booleans, ISO dates or other always-safe scalars. These get
+// substituted as numbers/strings of constrained shape and cannot inject shell.
+const SAFE_LEAF_FIELDS = new Set([
+  "number", "id", "node_id", "comments",
+  "created_at", "updated_at", "closed_at", "merged_at", "submitted_at",
+  "locked", "draft", "merged", "rebaseable", "mergeable", "mergeable_state",
+  "additions", "deletions", "changed_files", "commits", "review_comments",
+  "state", "active_lock_reason",
+]);
+
+function isTaintedRunExpr(text) {
+  // Matches `${{ github.event.<scope>.<rest> }}` or `${{ inputs.<name> }}` or
+  // `${{ github.head_ref }}` / `${{ github.ref }}`. Returns the matched substring,
+  // or null if all matches in the text resolve to a SAFE_LEAF_FIELDS terminal.
+  const EXPR = /\$\{\{\s*(github\.event\.(pull_request|issue|comment|head_commit|review|workflow_run)\.([\w.]+)|github\.head_ref|github\.ref|inputs\.([\w.]+))[^}]*\}\}/g;
+  let m;
+  while ((m = EXPR.exec(text)) !== null) {
+    const path = m[3]; // event leaf path
+    if (path) {
+      // Take the LAST segment of the chain — the leaf scalar.
+      const leaf = path.split(".").pop();
+      if (SAFE_LEAF_FIELDS.has(leaf)) continue;
+      return m[0];
+    }
+    // Non-event expressions (head_ref, ref, inputs.*) are always tainted.
+    return m[0];
+  }
+  return null;
+}
+
 function rule3CommandInjection(w) {
   const findings = [];
-  // Tainted expressions: any github.event.* user-shaped field, head_ref, ref, inputs.*, env.PR_*
-  const TAINT = /\$\{\{\s*(?:github\.event\.(pull_request|issue|comment|head_commit|review|workflow_run)\.|github\.head_ref|github\.ref|inputs\.)/;
   eachStep(w, (step, ctx) => {
     if (typeof step?.run !== "string") return;
-    const m = step.run.match(TAINT);
-    if (!m) return;
+    const hit = isTaintedRunExpr(step.run);
+    if (!hit) return;
     findings.push({
       id: "cmd-injection",
       severity: "crit",
       title: "Untrusted GitHub context expanded into shell `run:` block",
-      description: `\`${m[0]}…\` is interpolated directly into a shell command. Anything an attacker can shape (PR title, branch name, comment body) becomes part of the script — a classic command injection sink.`,
+      description: `\`${hit}\` is interpolated directly into a shell command. Anything an attacker can shape (PR title, branch name, comment body) becomes part of the script — a classic command injection sink.`,
       location: `jobs.${ctx.jobName}.steps[${ctx.stepIndex}].run`,
       fix: "Pass the value through `env` then reference the env var in the script:\n  env:\n    PR_TITLE: ${{ github.event.pull_request.title }}\n  run: echo \"$PR_TITLE\"",
     });

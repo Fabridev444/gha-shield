@@ -160,16 +160,33 @@ function r2(w) {
   });
   return findings;
 }
-const TAINT = /\$\{\{\s*(?:github\.event\.(pull_request|issue|comment|head_commit|review|workflow_run)\.|github\.head_ref|github\.ref|inputs\.)/;
+const SAFE_LEAF_FIELDS = new Set([
+  "number", "id", "node_id", "comments",
+  "created_at", "updated_at", "closed_at", "merged_at", "submitted_at",
+  "locked", "draft", "merged", "rebaseable", "mergeable", "mergeable_state",
+  "additions", "deletions", "changed_files", "commits", "review_comments",
+  "state", "active_lock_reason",
+]);
+function isTaintedRunExpr(text) {
+  const EXPR = /\$\{\{\s*(github\.event\.(pull_request|issue|comment|head_commit|review|workflow_run)\.([\w.]+)|github\.head_ref|github\.ref|inputs\.([\w.]+))[^}]*\}\}/g;
+  let m;
+  while ((m = EXPR.exec(text)) !== null) {
+    const path = m[3];
+    if (path) { const leaf = path.split(".").pop(); if (SAFE_LEAF_FIELDS.has(leaf)) continue; return m[0]; }
+    return m[0];
+  }
+  return null;
+}
 function r3(w) {
   const findings = [];
   eachStep(w, (step, ctx) => {
     if (typeof step?.run !== "string") return;
-    const m = step.run.match(TAINT);
-    if (m) findings.push({ id: "cmd-injection", severity: "crit", title: "Untrusted GitHub context expanded into run:", location: `jobs.${ctx.jobName}.steps[${ctx.stepIndex}].run`, detail: m[0] });
+    const hit = isTaintedRunExpr(step.run);
+    if (hit) findings.push({ id: "cmd-injection", severity: "crit", title: "Untrusted GitHub context expanded into run:", location: `jobs.${ctx.jobName}.steps[${ctx.stepIndex}].run`, detail: hit });
   });
   return findings;
 }
+
 function r4(w) {
   const ext = ["push","pull_request","pull_request_target","issues","issue_comment","release","schedule","workflow_run"];
   if (!normalizeTriggers(w.on).some((t) => ext.includes(t))) return [];
