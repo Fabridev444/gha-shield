@@ -38,6 +38,24 @@ The 19 `no-permissions` findings are jobs on external triggers without an explic
 
 ---
 
+## `oven-sh/bun` — 30 workflows, 59 findings
+
+Scanned: 2026-05-26, `main` branch, after the rule 3 v1.0.1 false-positive cleanup.
+
+```
+By severity:
+   0 CRIT
+  11 HIGH
+  27 MED
+  21 LOW
+```
+
+11 HIGH findings concentrate on `third-party-action-token` — third-party actions in workflows like `update-vendor.yml` and `update-zstd.yml` receiving `GITHUB_TOKEN`. Recommended mitigation per the rule fix: vendor the action's logic into a local `./.github/actions/*` and audit it, or use a narrowly-scoped PAT.
+
+The 27 MED + 21 LOW are mostly the `no-permissions` and `no-timeout-minutes` clusters across automation workflows.
+
+---
+
 ## `astral-sh/uv` — 27 workflows, 12 findings
 
 Scanned: 2026-05-26, `main` branch.
